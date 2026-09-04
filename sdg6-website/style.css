@@ -1,0 +1,262 @@
+/* ── RESET ────────────────────────────────────────── */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: Arial, sans-serif;
+  font-size: 15px;
+  background-color: #f4f6f8;
+  color: #222;
+}
+
+/* ── LAYOUT ───────────────────────────────────────── */
+.layout {
+  display: flex;
+  min-height: 100vh;
+}
+
+/* ── SIDEBAR ──────────────────────────────────────── */
+
+.sidebar {
+  width: 220px;
+  background-color: #0a1628;
+  color: #ffffff;
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  overflow-y: auto;
+}
+
+.sidebar-logo {
+  padding: 24px 20px 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  text-align: center;
+}
+
+.logo-icon {
+  font-size: 36px;
+  margin-bottom: 6px;
+}
+
+.logo-text {
+  font-size: 22px;
+  font-weight: bold;
+  color: #ffffff;
+}
+
+.logo-text span {
+  color: #00b4d8;
+}
+
+.logo-sub {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.4);
+  margin-top: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.nav-section {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: rgba(255, 255, 255, 0.35);
+  padding: 18px 20px 6px;
+}
+
+.nav-link {
+  display: block;
+  padding: 10px 20px;
+  color: rgba(255, 255, 255, 0.65);
+  text-decoration: none;
+  font-size: 14px;
+  border-left: 3px solid transparent;
+}
+
+.nav-link:hover,
+.nav-link.active {
+  color: #ffffff;
+  background-color: rgba(0, 180, 216, 0.12);
+  border-left-color: #00b4d8;
+}
+
+.sidebar-footer {
+  margin-top: auto;
+  padding: 16px 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.3);
+}
+
+.sdg-badge {
+  display: inline-block;
+  background-color: rgba(0, 180, 216, 0.15);
+  border: 1px solid rgba(0, 180, 216, 0.3);
+  color: #00b4d8;
+  font-size: 11px;
+  font-weight: bold;
+  padding: 4px 10px;
+  border-radius: 12px;
+  margin-bottom: 6px;
+}
+
+/* ── MAIN CONTENT ─────────────────────────────────── */
+.container {
+  margin-left: 220px;
+  padding: 36px 32px;
+  flex: 1;
+}
+
+/* ── PAGES ────────────────────────────────────────── */
+.page {
+  display: none;
+}
+
+.page.active {
+  display: block;
+}
+
+h1 {
+  font-size: 26px;
+  color: #003d5c;
+  margin-bottom: 6px;
+}
+
+.subtitle {
+  color: #666;
+  font-size: 14px;
+  margin-bottom: 20px;
+}
+
+/* ── TABLE ────────────────────────────────────────── */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #ffffff;
+  font-size: 14px;
+}
+
+th {
+  background-color: #e8eff4;
+  text-align: left;
+  padding: 10px 12px;
+  font-size: 12px;
+  color: #444;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  border-bottom: 2px solid #c0cdd6;
+  white-space: nowrap;
+}
+
+td {
+  padding: 10px 12px;
+  border-bottom: 1px solid #e8eef2;
+  vertical-align: middle;
+}
+
+tr:last-child td {
+  border-bottom: none;
+}
+
+tr:hover td {
+  background-color: #f5f9fc;
+}
+
+td.loading {
+  text-align: center;
+  color: #888;
+  font-style: italic;
+  padding: 24px;
+}
+.form-row {
+  margin-bottom: 12px;
+}
+
+label {
+  display: block;
+  margin-bottom: 4px;
+}
+
+input,
+button {
+  font: inherit;
+  padding: 6px;
+}
+
+button {
+  cursor: pointer;
+}
+
+.message {
+  display: none;
+  margin-top: 12px;
+  padding: 8px;
+  border: 1px solid #cccccc;
+}
+
+.message.success,
+.message.error {
+  display: block;
+}
+
+.message.error {
+  background-color: #fbd9d3;
+  color: #900000;
+  border-color: #900000;
+}
+
+.message.success {
+  background-color: #cefad0;
+  color: #008631;
+  border-color:#008631;
+}
+
+.muted {
+  color: #666666;
+}
+
+.chart-wrapper {
+  max-width: 800px;
+  height: 420px;
+}
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr); /* 2 per row */
+  gap: 20px;
+}
+
+.card {
+  background: white;
+  padding: 15px;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+
+  height: 260px;
+
+  display: flex;
+  flex-direction: column;
+}
+
+.chart-wrapper {
+  position: relative;
+  flex: 1;    
+  min-height: 0;
+  overflow: hidden;
+}
+
+.chart-wrapper canvas {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.card:hover {
+  transform: translateY(-3px);
+  transition: 0.2s;
+}

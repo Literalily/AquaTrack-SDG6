@@ -1,0 +1,2260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AquaTrack - Water Pump Management</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="script.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+  <div class="layout">
+
+    <aside class="sidebar">
+      <div class="sidebar-logo">
+        <div class="logo-icon">💧</div>
+        <div class="logo-text">Aqua<span>Track</span></div>
+        <div class="logo-sub">Water Pump Management</div>
+      </div>
+
+      <nav>
+            <div class="nav-section">Overview</div>
+        <a href="#" class="nav-link active" onclick="showPage('dashboard')">📊 Dashboard</a>
+
+        <div class="nav-section">Data</div>
+        <a href="#" class="nav-link" onclick="showPage('pumps')">🔧 Water Pumps</a>
+        <a href="#" class="nav-link" onclick="showPage('locations')">📍 Locations</a>
+        <a href="#" class="nav-link" onclick="showPage('watertests')">🧪 Water Tests</a>
+        <a href="#" class="nav-link" onclick="showPage('maintenance')">🛠️ Maintenance</a>
+        <a href="#" class="nav-link" onclick="showPage('employees')">👷 Employees</a>
+        <a href="#" class="nav-link" onclick="showPage('departments')">🏢 Departments</a>
+
+        <div class="nav-section">Analytics</div>
+        <a href="#" class="nav-link" onclick="showPage('report-installed-waterpumps')">📋 Installed Water Pumps</a>
+        <a href="#" class="nav-link" onclick="showPage('report-uncompleted-maintenance')">📋 Uncompleted Maintenance</a>
+        <a href="#" class="nav-link" onclick="showPage('employee-main-assignment')">📋 Employee Maintenance Assignment</a>
+        <a href="#" class="nav-link" onclick="showPage('employee-pump-assignment')">📋 Employee Pump Assignment</a>
+        <a href="#" class="nav-link" onclick="showPage('most-water-tests-pumps')">📋 Most Water Tests Pumps</a>
+        <a href="#" class="nav-link" onclick="showPage('report-maintenance')">📋 Regional Maintainance Priorization</a>
+        <a href="#" class="nav-link" onclick="showPage('report-workload')">📋 Staff Workload Distrubution</a>
+        <a href="#" class="nav-link" onclick="showPage('report-contamination')">📋 High-Risk Basin Contamination</a>
+        <a href="#" class="nav-link" onclick="showPage('report-maintenance-history')">📋 Pumps with No Maintenance History</a>
+        <a href="#" class="nav-link" onclick="showPage('maintenance-reliability')">📋 Maintenance Reliability</a>
+        <a href="#" class="nav-link" onclick="showPage('high-maintenance-pumps')">📋 High Maintenance Pumps</a>
+        </nav>
+
+      <div class="sidebar-footer">
+        <div class="sdg-badge">🌊 UN SDG Goal 6</div>
+        <div>Water &amp; Sanitation for All</div>
+      </div>
+    </aside>
+
+    <div class="container">
+
+      <!-- DASHBOARD -->
+      <div id="page-dashboard" class="page active">
+        <h1>Dashboard</h1>
+        <p class="subtitle">Welcome to AquaTrack — supporting UN SDG Goal 6: Clean Water and Sanitation.</p>
+        <div class="dashboard-grid">
+
+          <!-- CARD 1 -->
+          <div class="card">
+            <h3>Average water quality metrics by country</h3>
+            <div class="chart-wrapper">
+              <canvas id="averageWaterQualityChart"></canvas>
+            </div>
+            
+            <script>
+              let waterChart; // store chart instance so we can reuse/destroy
+
+              function loadAverageWaterQualityChart() {
+
+                runQuery(`SELECT l.country,
+                  COUNT(DISTINCT wt.watertestId) AS totalTests,
+                  ROUND(AVG(wt.waterpH), 2) AS avgPH,
+                  ROUND(AVG(wt.arsenic), 2) AS avgArsenic,
+                  ROUND(AVG(wt.fluoride), 2) AS avgFluoride,
+                  ROUND(AVG(wt.bacteria), 1) AS avgBacteria
+                  FROM tblwatertest wt
+                  JOIN tblwaterpump wp ON wt.waterPumpId = wp.waterPumpId
+                  JOIN tbllocation l ON wp.locationId = l.locationId
+                  GROUP BY l.country
+                  ORDER BY l.country;
+                `, function(json) {
+
+                  if (!json || !json.data) return;
+
+                  const labels = [];
+                  const avgPH = [];
+                  const avgArsenic = [];
+                  const avgFluoride =  []; 
+
+                  json.data.forEach(row => {
+                    labels.push(row.country);
+                    avgPH.push(row.avgPH);
+                    avgArsenic.push(row.avgArsenic);
+                    avgFluoride.push(row.avgFluoride);
+                  });
+
+                  const ctx = document.getElementById("averageWaterQualityChart");
+
+                  if (waterChart) {
+                    waterChart.destroy();
+                  }
+
+                  waterChart = new Chart(ctx, {
+                    type: "bar",
+                    data: {
+                      labels: labels,
+                      datasets: [
+                        {
+                          label: "Avg pH",
+                          data: avgPH,
+                          backgroundColor: "#003049"
+                        },
+                        {
+                          label: "Avg Arsenic",
+                          data: avgArsenic,
+                          backgroundColor: "#d62828"
+                        },
+                        {
+                          label: "Avg Fluoride",
+                          data: avgFluoride,
+                          backgroundColor: "#f77f00"
+                        }
+                      ]
+                    },
+                    options: {
+                      responsive: true,
+                      maintainAspectRatio: false,
+                      plugins: {
+                        legend: { display: false }
+                      },
+                      scales: {
+                        y: {
+                          beginAtZero: true,
+                          suggestedMax: 14
+                        }
+                      }
+                    }
+                  });
+                });
+              }
+
+              loadAverageWaterQualityChart();
+            </script>
+          </div>
+
+          <!-- CARD 2 -->
+          <div class="card">
+            <h3>Workload Distribution - Top 10 Employees</h3>
+            <div class="chart-wrapper">
+              <canvas id="workloadChart"></canvas>
+            </div>
+          </div>
+          <script>
+            let workloadChart;
+
+            function loadWorkloadChart() {
+              var sql = 'SELECT CONCAT(e.forename, " ", e.surname) AS employee_full_name, ' +
+                'COUNT(wpe.waterPumpId) AS total_assigned_pumps ' +
+                'FROM tblemployees e ' +
+                'INNER JOIN tblwaterpumpsemployees wpe ON e.employeeId = wpe.employeeId ' +
+                'GROUP BY e.employeeId ' +
+                'HAVING total_assigned_pumps > 3 ' +
+                'ORDER BY total_assigned_pumps DESC ' +
+                'LIMIT 10'
+
+              runQuery(sql, function(json) {
+                if (!json || !json.data || json.data.length === 0) return;
+
+                var labels = json.data.map(function(row) { return row.employee_full_name; });
+                var counts = json.data.map(function(row) { return parseInt(row.total_assigned_pumps); });
+
+                var ctx = document.getElementById('workloadChart');
+                if (workloadChart) workloadChart.destroy();
+
+                workloadChart = new Chart(ctx, {
+                  type: 'bar',
+                  data: {
+                    labels: labels,
+                    datasets: [{
+                      label: 'Pumps Assigned',
+                      data: counts,
+                      backgroundColor: '#4361ee'
+                    }]
+                  },
+                  options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: { x: { beginAtZero: true } }
+                  }
+                });
+              });
+            }
+
+            loadWorkloadChart();
+          </script>
+
+          <!-- CARD 3 -->
+          <div class="card">
+            <h3>Uncompleted and Ongoing Maintenance by country</h3>
+            <div class="chart-wrapper">
+              <canvas id="uncompletedMaintenanceChart"></canvas>
+            </div>
+            
+            <script>
+              let maintenanceChart; // store chart instance so we can reuse/destroy
+
+              function loaduncompletedMaintenanceChart() {
+
+                runQuery(`SELECT l.country,  
+                    COUNT(m.maintenanceStatus) AS Num 
+                    FROM tblmaintenance m 
+                    JOIN tblwaterpump wp ON wp.waterPumpId = m.waterPumpId 
+                    JOIN tbllocation l ON l.locationId = wp.waterPumpId 
+                    WHERE (m.maintenanceStatus = 'Ongoing' OR m.maintenanceStatus = 'Uncompleted') AND DATEDIFF(CURRENT_DATE(),m.maintenanceDate)> 30
+                    GROUP By l.country
+                    ORDER BY Num DESC;
+                `, function(json) {
+
+                  if (!json || !json.data) return;
+
+                  const labels = [];
+                  const uncompleted = [];
+
+                  json.data.forEach(row => {
+                    labels.push(row.country);
+                    uncompleted.push(row.Num);
+                  });
+
+                  const ctx = document.getElementById("uncompletedMaintenanceChart");
+
+                  if (maintenanceChart) {
+                    maintenanceChart.destroy();
+                  }
+
+                  maintenanceChart = new Chart(ctx, {
+                    type: "bar",
+                    data: {
+                      labels: labels,
+                      datasets: [
+                        {
+                          label: "Uncompleted/Ongoing",
+                          data: uncompleted,
+                          backgroundColor: "#663399"
+                        },
+                      ]
+                    },
+                    options: {
+                      responsive: true,
+                      maintainAspectRatio: false,
+                      plugins: {
+                        legend: { display: false }
+                      },
+                      scales: {
+                        y: {
+                          beginAtZero: true,
+                          suggestedMax: 12
+                        }
+                      }
+                    }
+                  });
+                });
+              }
+
+              loaduncompletedMaintenanceChart();
+            </script>
+          </div>
+
+          <!-- CARD 4 - Water Pump Quality by Country-->
+
+          <div class="card">
+            <h3>Water Pump Quality by Country</h3>
+            <div class="chart-wrapper">
+              <canvas id="waterQualityChartDashboard"></canvas>
+            </div>
+            <script>
+              let waterQualityChart;
+
+              function loadWaterQualityChart() {
+
+                var sql = `SELECT l.country, SUM(w.waterQuality = 'Low') AS lowCount, SUM(w.waterQuality = 'Medium') AS mediumCount, SUM(w.waterQuality = 'High') AS highCount FROM tbllocation l INNER JOIN tblwaterpump w ON l.locationId = w.locationId GROUP BY l.country ORDER BY l.country;`;
+
+                runQuery(sql, function (json) {
+                  if (!json || !json.data || json.data.length === 0) return;
+
+                  // Labels = countries
+                  var labels = json.data.map(row => row.country);
+
+                  // Data for each quality level
+                  var low = json.data.map(row => parseInt(row.lowCount));
+                  var medium = json.data.map(row => parseInt(row.mediumCount));
+                  var high = json.data.map(row => parseInt(row.highCount));
+
+                  var ctx = document.getElementById('waterQualityChartDashboard');
+                  if (!ctx) return;
+
+                  if (waterQualityChart) waterQualityChart.destroy();
+
+                  waterQualityChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                      labels: labels,
+                      datasets: [
+                        {
+                          label: 'Low',
+                          data: low,
+                          backgroundColor: '#e63946'
+                        },
+                        {
+                          label: 'Medium',
+                          data: medium,
+                          backgroundColor: '#ffb703'
+                        },
+                        {
+                          label: 'High',
+                          data: high,
+                          backgroundColor: '#2a9d8f'
+                        }
+
+                      ]
+                    },
+                    options: {
+                      responsive: true,
+                      maintainAspectRatio: false,
+                      plugins: { legend: { display: true } },
+                      scales: {
+                        x: { stacked: true },
+                        y: { beginAtZero: true, stacked: true }
+                      }
+                    }
+                  });
+                });
+              }
+              loadWaterQualityChart();
+            </script>
+          </div>
+
+          <!-- REPORT CARD 5 (Number of Pumps by Maintenance Type) -->
+          <div class="card">
+            <h3>Number of Pumps of each Maintenance Type</h3>
+            <div class="filter-bar">
+              <label for="filter-maintenance-country">Filter by Country:</label>
+              <select id="filter-maintenance-country" onchange="loadMaintenancePieChart()">
+                <option value="">All Countries</option>
+              </select>
+            </div>
+            <div class="chart-wrapper">
+              <canvas id="maintenancePieChartDashboard"></canvas>
+            </div>
+
+            <!-- dropdown to filter the pie chart by country -->
+            <script>
+              let maintenancePieChart;
+
+              function loadMaintenancePieChart() {
+
+                var selectedCountry = document.getElementById("filter-maintenance-country").value;
+
+                var sql = `SELECT l.country, m.pumpCondition, COUNT(*) AS count
+            FROM tblmaintenance m
+            JOIN tblwaterpump wp ON m.waterPumpId = wp.waterPumpId
+            JOIN tbllocation l ON wp.locationId = l.locationId`;
+
+                if (selectedCountry !== "") {
+                  sql += ` AND l.country = '${selectedCountry}'`;
+                }
+
+                sql += ` GROUP BY m.pumpCondition ORDER BY l.country;`;
+
+                runQuery(sql, function (json) {
+                  if (!json || !json.data || json.data.length === 0) return;
+
+                  var labels = [];
+                  var counts = [];
+
+                  json.data.forEach(row => {
+                    labels.push(row.pumpCondition);
+                    counts.push(parseInt(row.count));
+                  });
+
+                  var ctx = document.getElementById('maintenancePieChartDashboard');
+
+                  if (!ctx) return;
+
+                  if (maintenancePieChart) maintenancePieChart.destroy();
+
+                  maintenancePieChart = new Chart(ctx, {
+                    type: "pie",
+                    data: {
+                      labels: labels,
+                      datasets: [{
+                        label: "Pump Condition",
+                        data: counts,
+                        backgroundColor: [
+                          "#ffb703",  // yellow for under construction
+                          "#2a9d8f",  // green for working
+                          "#e63946",  // red for maintenance required
+                          "#6c757d"   // grey for fallback in case of more conditions
+                        ]
+                      }]
+                    },
+                    options: {
+                      responsive: true,
+                      maintainAspectRatio: false,
+                      plugins: {
+                        legend: {
+                          position: "bottom"
+                        }
+                      }
+                    }
+                  });
+                });
+              }
+
+              document.addEventListener("DOMContentLoaded", function () {
+                loadMaintenanceCountries();
+                loadMaintenancePieChart();
+              });
+            </script>
+
+          </div>
+
+         <!-- CARD 6 -->
+          <div class="card">
+            <h3>Water Quality Consistency</h3>
+            <div class="chart-wrapper">
+              <canvas id="waterQualityConsistencyChart"></canvas>
+            </div>
+            
+            <script>
+              var waterQualityConsistencyChartInstance;
+
+              function loadWaterQualityConsistencyDashboard() {
+
+                runQuery(`SELECT 
+                    l.country AS label,
+                    ROUND(STDDEV(wt.arsenic), 2) AS arsenic_sd,
+                    ROUND(STDDEV(wt.fluoride), 2) AS fluoride_sd,
+                    ROUND(STDDEV(wt.bacteria), 2) AS bacteria_sd,
+                    ROUND(
+                        (STDDEV(wt.arsenic) + STDDEV(wt.fluoride) + STDDEV(wt.bacteria)) / 3,
+                        2
+                    ) AS value
+                FROM tblwatertest wt
+                JOIN tblwaterpump wp ON wp.waterPumpId = wt.waterPumpId
+                JOIN tbllocation l ON l.locationId = wp.locationId
+                GROUP BY l.country
+                ORDER BY value DESC`, function(json) {
+
+                  if (!json || !json.data) return;
+
+                  const labels = [];
+                  const data = [];
+
+                  json.data.forEach(row => {
+                    labels.push(row.label);
+                    data.push(row.value);
+                  });
+
+                  const ctx = document.getElementById("waterQualityConsistencyChart");
+
+                  if (waterQualityConsistencyChartInstance) {
+                    waterQualityConsistencyChartInstance.destroy();
+                  }
+
+                  waterQualityConsistencyChartInstance = new Chart(ctx, {
+                    type: "bar",
+                    data: {
+                      labels: labels,
+                      datasets: [{
+                        label: "Water Quality Variability",
+                        data: data,
+                        backgroundColor: "#d62828"
+                      }]
+                    },
+                    options: {
+                      responsive: true,
+                      maintainAspectRatio: false,
+                      plugins: {
+                        legend: { display: false }
+                      },
+                      scales: {
+                        y: {
+                          beginAtZero: true
+                        }
+                      }
+                    }
+                  });
+                });
+              }
+
+              loadWaterQualityConsistencyDashboard();
+            </script>
+          </div>
+
+        </div>
+        
+      </div>
+
+
+      <!-- WATER PUMPS -->
+      <div id="page-pumps" class="page">
+        <h1>Water Pumps</h1>
+        <p class="subtitle">All registered water pump installations.<input type="button" value="Add Water Pump" onclick="showPage('add-waterPump');"></p>
+
+        <table id="pumps-table">
+          <thead>
+            <tr>
+              <th>Pump ID</th>
+              <th>Location ID</th>
+              <th>Pump Type</th>
+              <th>Water Quality</th>
+              <th>Install Date</th>
+              <th>Water Output</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="pumps-tbody">
+            <tr><td colspan="4" class="loading">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!--ADD Water Pump -->
+      <div id="page-add-waterPump" class="page">
+        <h1>Add Water Pump</h1>
+        <p class="subtitle">All registered water pump installations.<input type="button" value="Add Water Pump" onclick="showPage('add-waterPump');"></p>
+        <form id="waterPumpForm">
+        <div class="form-row">
+          <label for="locationId">Location ID</label>
+          <input type="number" id="locationId">
+        </div>
+
+        <div class="form-row">
+          <label for="pumpType">Pump Type</label>
+          <select name="pumpType" id="pumpType" style="height: 35px; width: 200px;font-size: medium;", >
+            <option value="1" style="font-size: medium;">Hand Pump</option>
+            <option value="2" style="font-size: medium;">Mechanized Pump</option>
+            <option value="3" style="font-size: medium;">Solar Pump</option>
+          </select>
+        </div>
+
+        <div class="form-row">
+          <label for="waterQuality">Water Quality</label>
+          <select name="waterQuality" id="waterQuality" style="height: 35px; width: 200px;font-size: medium;", >
+            <option value="1" style="font-size: medium;">High</option>
+            <option value="2" style="font-size: medium;">Medium</option>
+            <option value="3" style="font-size: medium;">Low</option>
+          </select>
+        </div>
+
+        <div class="form-row">
+          <label for="installDate">Installation Date</label>
+          <input type="date" id="installDate" style="width: 200px;">
+        </div>
+
+        <div class="form-row">
+          <label for="waterOutput">Water Output</label>
+          <input type="number" id="waterOutput">
+        </div>
+
+        <button type="submit">Submit</button>
+      </form>
+
+      <!-- This empty box is filled with success or error messages by JavaScript. -->
+      <div id="addwaterpumpoutput" class="message"></div>
+      </div>
+
+    <script>
+   const showMessageAddWaterPump = (text, type) => {
+      const output = document.querySelector("#addwaterpumpoutput");
+      output.textContent = text;
+      output.className = `message ${type}`;
+    };
+    // Listen for the form being submitted instead of letting the browser reload the page.
+    document.querySelector("#waterPumpForm").addEventListener("submit", async (event) => {
+      event.preventDefault();
+
+      var pumpType = document.getElementById("pumpType");
+      var selectedText = pumpType.options[pumpType.selectedIndex].text;
+
+      var waterQuality = document.getElementById("waterQuality");
+      var qualitySelectedText = waterQuality.options[waterQuality.selectedIndex].text;
+
+      // Read the values from the form and build a JavaScript object to work with.
+      const waterPump = {
+        locationId: document.querySelector("#locationId").value,
+        PumpType: selectedText,
+        waterQuality: qualitySelectedText,
+        installationDate: document.querySelector("#installDate").value,
+        waterOutput: Number(document.querySelector("#waterOutput").value),
+      };
+
+      // Stop here if any of the values break our validation rules.
+      const validationMessageWaterPump = validateWaterPump(waterPump);
+
+      if (validationMessageWaterPump) {
+        showMessageAddWaterPump(validationMessageWaterPump, "error");
+        return;
+      }
+
+      // Build the SQL INSERT statement using the form values.
+      const sql = `
+          INSERT INTO tblwaterpump (locationId, PumpType, waterQuality, installationDate, waterOutput)
+          VALUES (
+            '${document.querySelector("#locationId").value}',
+            '${escapeSql(waterPump.PumpType)}',
+            '${escapeSql(waterPump.waterQuality)}',
+            '${waterPump.installationDate}',
+            '${waterPump.waterOutput}'
+          )
+        `;
+
+      // Send the SQL statement to dbConnector.php and wait for the reply.
+      runQuery(sql, function(result) {
+
+        if (result && result.success) {
+          showMessageAddWaterPump("Water Pump added successfully.", "success");
+
+          document.querySelector("#waterPumpForm").reset();
+
+          return;
+        }
+
+        if (result && result.error) {
+         showMessageAddWaterPump(result.error, "error");
+        } else {
+          showMessageAddWaterPump("Unable to add the water pump.", "error");
+        }
+
+      });
+    });
+  </script>
+
+  <!-- EDIT Water Pump -->
+      <div id="page-edit-waterPump" class="page">
+        <h1>Edit Water Pump</h1>
+        <p class="subtitle">All registered water pump installations.<input type="button" value="Add Water Pump" onclick="showPage('add-waterPump');"></p>
+        <div id="tableOutput"></div>
+        <form id="editWaterPumpForm">
+        <input type="hidden" id="editWaterPumpID">
+        <div class="form-row">
+          <label for="locationId">Location ID</label>
+          <input type="number" id="editLocationId">
+        </div>
+
+        <div class="form-row">
+          <label for="pumpType">Pump Type</label>
+          <select name="pumpType" id="editPumpType" style="height: 35px; width: 200px;font-size: medium;", >
+            <option value="1" style="font-size: medium;">Hand Pump</option>
+            <option value="2" style="font-size: medium;">Mechanized Pump</option>
+            <option value="3" style="font-size: medium;">Solar Pump</option>
+          </select>
+        </div>
+
+        <div class="form-row">
+          <label for="waterQuality">Water Quality</label>
+          <select name="waterQuality" id="editWaterQuality" style="height: 35px; width: 200px;font-size: medium;", >
+            <option value="1" style="font-size: medium;">High</option>
+            <option value="2" style="font-size: medium;">Medium</option>
+            <option value="3" style="font-size: medium;">Low</option>
+          </select>
+          <!-- <input type="text" id="editWaterQuality"> -->
+        </div>
+
+        <div class="form-row">
+          <label for="installDate">Installation Date</label>
+          <input type="date" id="editInstallDate" style="width: 200px;">
+        </div>
+
+        <div class="form-row">
+          <label for="waterOutput">Water Output</label>
+          <input type="number" id="editWaterOutput">
+        </div>
+
+        <button type="submit">Submit</button>
+      </form>
+
+      <!-- This empty box is filled with success or error messages by JavaScript. -->
+      <div id="editWaterPumpOutput" class="message"></div>
+
+    </div>
+    <script>
+      const showEditWaterPumpMessage = (text, type) => {
+        const output = document.querySelector("#editWaterPumpOutput");
+        output.textContent = text;
+        output.className = `message ${type}`;
+      };
+
+      let selectedWaterPumpID = null;
+      let selectedWaterOutput = null;
+
+      document.querySelector("#editWaterPumpForm").addEventListener("submit", async (event) => {
+        event.preventDefault();
+
+        if (selectedWaterPumpID === null) {
+          showEditWaterPumpMessage("Choose a Water Pump record from the table before updating.", "error");
+          return;
+        }
+
+        var editPumpType = document.getElementById("editPumpType");
+        var editSelectedText = editPumpType.options[editPumpType.selectedIndex].text;
+
+        var editWaterQuality = document.getElementById("editWaterQuality");
+        var editQualitySelectedText = editWaterQuality.options[editWaterQuality.selectedIndex].text;
+
+        const waterPump = {
+          waterPumpId: Number(document.querySelector("#editWaterPumpID").value),
+          locationId: Number(document.querySelector("#editLocationId").value),
+          PumpType: editSelectedText,
+          waterQuality: editQualitySelectedText,
+          installationDate: document.querySelector("#editInstallDate").value.trim(),
+          waterOutput: Number(document.querySelector("#editWaterOutput").value)
+        };
+
+        console.log(waterPump.PumpType);
+        console.log(waterPump.locationId);
+
+        const validationMessage = validateWaterPump(waterPump);
+        console.log(validationMessage)
+        if (validationMessage) {
+          showEditWaterPumpMessage(validationMessage, "error");
+          return;
+        }
+
+        // Update the original row by matching the water pump ID that was selected earlier.
+        const sql = `
+          UPDATE tblwaterpump
+          SET
+            waterPumpId = ${waterPump.waterPumpId},
+            locationId = ${waterPump.locationId},
+            PumpType = '${editSelectedText}',
+            waterQuality = '${escapeSql(editQualitySelectedText)}',
+            installationDate = '${waterPump.installationDate}',
+            waterOutput =  ${waterPump.waterOutput}
+          WHERE waterPumpId = ${selectedWaterPumpID}
+        `;
+
+        // Send the SQL UPDATE statement to the PHP connector.
+        runQuery(sql, function(result) {
+          if (result && result.success) {
+            showEditWaterPumpMessage("Water Pump Record updated successfully.", "success");
+            return;
+          }
+
+          if (result && result.error) {
+            showEditWaterPumpMessage(result.error, "error");
+          } else {
+            showEditWaterPumpMessage("Update failed.", "error");
+          }
+          console.log(result.error);
+
+        });
+      });
+  </script>
+
+      <!-- LOCATIONS -->
+      <div id="page-locations" class="page">
+        <h1>Locations</h1>
+        <p class="subtitle">Geographic records for pump installation sites. <input type="button" value="Add Location" onclick="showPage('add-location');">
+
+        <table id="locations-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Country</th>
+              <th>State</th>
+              <th>City</th>
+              <th>Basin</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="locations-tbody">
+            <tr><td colspan="7" class="loading">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- ADD LOCATION -->
+      <div id="page-add-location" class="page">
+        <h1>Add Location</h1>
+        <p class="subtitle">Geographic records for pump installation sites. <input type="button" value="Add Location" onclick="showPage('add-location');"></p>
+        <form id="locationForm">
+        <div class="form-row">
+          <label for="country">Country</label>
+          <input type="text" id="addCountry">
+        </div>
+
+        <div class="form-row">
+          <label for="county">County</label>
+          <input type="text" id="addCounty">
+        </div>
+
+        <div class="form-row">
+          <label for="city">City</label>
+          <input type="text" id="addCity">
+        </div>
+
+        <div class="form-row">
+          <label for="basinName">Basin Name</label>
+          <input type="text" id="addBasinName">
+        </div>
+
+        <button type="submit">Submit</button>
+      </form>
+
+      <!-- This empty box is filled with success or error messages by JavaScript. -->
+      <div id="output" class="message"></div>
+
+    </div>
+    <script>
+      // Show feedback to the user after validation or a database action.
+      const showMessage = (text, type) => {
+        const output = document.querySelector("#output");
+        output.textContent = text;
+        output.className = `message ${type}`;
+      };
+
+      // Listen for the form being submitted instead of letting the browser reload the page.
+      document.querySelector("#locationForm").addEventListener("submit", async (event) => {
+        event.preventDefault();
+
+        // Read the values from the form and build a JavaScript object to work with.
+        const location = {
+          country: document.querySelector("#addCountry").value.trim(),
+          county: document.querySelector("#addCounty").value.trim(),
+          city: document.querySelector("#addCity").value.trim(),
+          basinName: document.querySelector("#addBasinName").value.trim(),
+        };
+
+        // Stop here if any of the values break our validation rules.
+        const validationMessage = validateLocation(location);
+        if (validationMessage) {
+          showMessage(validationMessage, "error");
+          return;
+        }
+
+        // Build the SQL INSERT statement using the form values.
+        const sql = `
+            INSERT INTO tbllocation (country, county, city, basinName)
+            VALUES (
+              '${escapeSql(location.country)}',
+              '${escapeSql(location.county)}',
+              '${escapeSql(location.city)}',
+              '${escapeSql(location.basinName)}'
+            )
+          `;
+
+        // Send the SQL statement to dbConnector.php and wait for the reply.
+        runQuery(sql, function(result) {
+
+      if (result && result.success) {
+        showMessage("Location added successfully.", "success");
+
+        document.querySelector("#locationForm").reset();
+
+        return;
+      }
+
+      if (result && result.error) {
+        showMessage(result.error, "error");
+      } else {
+        showMessage("Unable to add the record.", "error");
+      }
+
+    });
+   });
+
+  </script>
+  
+      <!-- EDIT LOCATION -->
+      <div id="page-edit-location" class="page">
+        <h1>Edit Location</h1>
+        <p class="subtitle">Geographic records for pump installation sites. <input type="button" value="Add Location" onclick="showPage('add-location');"></p>
+        <div id="tableOutput"></div>
+        <form id="editLocationForm">
+        <input type="hidden" id="editLocationID">
+        <div class="form-row">
+          <label for="country">Country</label>
+          <input type="text" id="editCountry">
+        </div>
+
+        <div class="form-row">
+          <label for="county">County</label>
+          <input type="text" id="editCounty">
+        </div>
+
+        <div class="form-row">
+          <label for="city">City</label>
+          <input type="text" id="editCity">
+        </div>
+
+        <div class="form-row">
+          <label for="basinName">Basin Name</label>
+          <input type="text" id="editBasinName">
+        </div>
+
+        <button type="submit">Submit</button>
+      </form>
+
+      <!-- This empty box is filled with success or error messages by JavaScript. -->
+      <div id="editOutput" class="editMessage"></div>
+
+    </div>
+    <script>
+      const showEditMessage = (text, type) => {
+        const output = document.querySelector("#editOutput");
+        output.textContent = text;
+        output.className = `message ${type}`;
+      };
+
+      let selectedLocationID = null;
+
+      document.querySelector("#editLocationForm").addEventListener("submit", async (event) => {
+        event.preventDefault();
+
+        if (selectedLocationID === null) {
+          showEditMessage("Choose a location from the table before updating.", "error");
+          return;
+        }
+
+        const location = {
+          locationID: Number(document.querySelector("#editLocationID").value),
+          country: document.querySelector("#editCountry").value.trim(),
+          county: document.querySelector("#editCounty").value.trim(),
+          city: document.querySelector("#editCity").value.trim(),
+          basinName: document.querySelector("#editBasinName").value.trim()
+        };
+
+        const validationMessage = validateLocation(location);
+        console.log(validationMessage)
+        if (validationMessage) {
+          showEditMessage(validationMessage, "error");
+          return;
+        }
+
+        // Update the original row by matching the student ID that was selected earlier.
+        const sql = `
+          UPDATE tbllocation
+          SET
+            locationId = ${location.locationID},
+            country = '${escapeSql(location.country)}',
+            county = '${escapeSql(location.county)}',
+            city = '${escapeSql(location.city)}',
+            basinName =  '${escapeSql(location.basinName)}'
+          WHERE locationId = ${selectedLocationID}
+        `;
+
+        // Send the SQL UPDATE statement to the PHP connector.
+        runQuery(sql, function(result) {
+          if (result && result.success) {
+            showEditMessage("Location updated successfully.", "success");
+            return;
+          }
+
+          if (result && result.error) {
+            showEditMessage(result.error, "error");
+          } else {
+            showEditMessage("Update failed.", "error");
+          }
+          console.log(result.error);
+
+        });
+      });
+  </script>
+
+      <!-- WATER TESTS -->
+      <div id="page-watertests" class="page">
+        <h1>Water Tests</h1>
+        <p class="subtitle">Quality test records for each pump.<input type="button" value="Add Record" onclick="showPage('add-watertest');"></p>
+
+        <table id="tests-table">
+          <thead>
+            <tr>
+              <th>Test ID</th>
+              <th>Pump ID</th>
+              <th>Equipment ID</th>
+              <th>Water pH</th>
+              <th>Arsenic</th>
+              <th>Flouride</th>
+              <th>Bacteria</th>
+              <th>Test Date</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="tests-tbody">
+            <tr><td colspan="9" class="loading">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- ADD WATER TEST -->
+      <div id="page-add-watertest" class="page">
+        <h1>Add Water Test Record</h1>
+        <p class="subtitle">Record a new water quality test.</p>
+        <form id="waterTestForm">
+        <div class="form-row">
+          <label for="testPumpId">Water Pump ID</label>
+          <input type="number" id="testPumpId">
+        </div>
+
+        <div class="form-row">
+          <label for="testEquipmentId">Equipment ID</label>
+          <input type="number" id="testEquipmentId">
+        </div>
+
+        <div class="form-row">
+          <label for="testpH">Water pH</label>
+          <input type="number" step="0.1" id="testpH">
+        </div>
+
+        <div class="form-row">
+          <label for="testArsenic">Arsenic</label>
+          <input type="number" step="0.001" id="testArsenic">
+        </div>
+
+        <div class="form-row">
+          <label for="testFluoride">Fluoride</label>
+          <input type="number" step="0.01" id="testFluoride">
+        </div>
+
+        <div class="form-row">
+          <label for="testBacteria">Bacteria</label>
+          <input type="number" step="0.1" id="testBacteria">
+        </div>
+
+        <div class="form-row">
+          <label for="testDate">Test Date</label>
+          <input type="date" id="testDate" style="width: 200px;">
+        </div>
+
+        <button type="submit">Submit</button>
+      </form>
+
+      <div id="addwatertestoutput" class="message"></div>
+      </div>
+
+      <!-- EDIT WATER TEST -->
+      <div id="page-edit-watertest" class="page">
+        <h1>Edit Water Test Record</h1>
+        <p class="subtitle">Update an existing water test record.</p>
+        <form id="editWaterTestForm">
+        <div class="form-row">
+          <label for="editWaterTestID">Test ID</label>
+          <input type="number" id="editWaterTestID" readonly>
+        </div>
+
+        <div class="form-row">
+          <label for="editTestPumpId">Water Pump ID</label>
+          <input type="number" id="editTestPumpId">
+        </div>
+
+        <div class="form-row">
+          <label for="editTestEquipmentId">Equipment ID</label>
+          <input type="number" id="editTestEquipmentId">
+        </div>
+
+        <div class="form-row">
+          <label for="editTestpH">Water pH</label>
+          <input type="number" step="0.1" id="editTestpH">
+        </div>
+
+        <div class="form-row">
+          <label for="editTestArsenic">Arsenic</label>
+          <input type="number" step="0.001" id="editTestArsenic">
+        </div>
+
+        <div class="form-row">
+          <label for="editTestFluoride">Fluoride</label>
+          <input type="number" step="0.01" id="editTestFluoride">
+        </div>
+
+        <div class="form-row">
+          <label for="editTestBacteria">Bacteria</label>
+          <input type="number" step="0.1" id="editTestBacteria">
+        </div>
+
+        <div class="form-row">
+          <label for="editTestDate">Test Date</label>
+          <input type="date" id="editTestDate" style="width: 200px;">
+        </div>
+
+        <button type="submit">Update</button>
+      </form>
+
+      <div id="editwatertestoutput" class="message"></div>
+      </div>
+
+    <script>
+    // Add Water Test Form Handler
+    const showMessageAddWaterTest = (text, type) => {
+      const output = document.querySelector("#addwatertestoutput");
+      output.textContent = text;
+      output.className = `message ${type}`;
+    };
+
+    document.querySelector("#waterTestForm").addEventListener("submit", async (event) => {
+      event.preventDefault();
+
+      const waterTest = {
+        waterPumpId: Number(document.querySelector("#testPumpId").value),
+        equipmentId: Number(document.querySelector("#testEquipmentId").value),
+        waterpH: document.querySelector("#testpH").value ? Number(document.querySelector("#testpH").value) : null,
+        arsenic: document.querySelector("#testArsenic").value ? Number(document.querySelector("#testArsenic").value) : null,
+        fluoride: document.querySelector("#testFluoride").value ? Number(document.querySelector("#testFluoride").value) : null,
+        bacteria: document.querySelector("#testBacteria").value ? Number(document.querySelector("#testBacteria").value) : null,
+        testDate: document.querySelector("#testDate").value,
+      };
+
+      if (!waterTest.waterPumpId || waterTest.waterPumpId < 1) {
+        showMessageAddWaterTest("Water Pump ID must be a whole number greater than 0.", "error");
+        return;
+      }
+
+      if (!waterTest.equipmentId || waterTest.equipmentId < 1) {
+        showMessageAddWaterTest("Equipment ID must be a whole number greater than 0.", "error");
+        return;
+      }
+
+      if (!waterTest.testDate) {
+        showMessageAddWaterTest("Test Date is required.", "error");
+        return;
+      }
+
+      const sql = `
+        INSERT INTO tblwatertest (waterPumpId, equipmentId, waterpH, arsenic, fluoride, bacteria, testDate)
+        VALUES (
+          '${waterTest.waterPumpId}',
+          '${waterTest.equipmentId}',
+          ${waterTest.waterpH !== null ? "'" + waterTest.waterpH + "'" : 'NULL'},
+          ${waterTest.arsenic !== null ? "'" + waterTest.arsenic + "'" : 'NULL'},
+          ${waterTest.fluoride !== null ? "'" + waterTest.fluoride + "'" : 'NULL'},
+          ${waterTest.bacteria !== null ? "'" + waterTest.bacteria + "'" : 'NULL'},
+          '${waterTest.testDate}'
+        )
+      `;
+
+      runQuery(sql, function(result) {
+        if (result && result.success) {
+          showMessageAddWaterTest("Water test added successfully.", "success");
+          document.querySelector("#waterTestForm").reset();
+          return;
+        }
+        if (result && result.error) {
+          showMessageAddWaterTest(result.error, "error");
+        } else {
+          showMessageAddWaterTest("Unable to add the record.", "error");
+        }
+      });
+    });
+
+    // Edit Water Test Form Handler
+    const showMessageEditWaterTest = (text, type) => {
+      const output = document.querySelector("#editwatertestoutput");
+      output.textContent = text;
+      output.className = `message ${type}`;
+    };
+
+    document.querySelector("#editWaterTestForm").addEventListener("submit", async (event) => {
+      event.preventDefault();
+
+      const waterTest = {
+        watertestId: Number(document.querySelector("#editWaterTestID").value),
+        waterPumpId: Number(document.querySelector("#editTestPumpId").value),
+        equipmentId: Number(document.querySelector("#editTestEquipmentId").value),
+        waterpH: document.querySelector("#editTestpH").value ? Number(document.querySelector("#editTestpH").value) : null,
+        arsenic: document.querySelector("#editTestArsenic").value ? Number(document.querySelector("#editTestArsenic").value) : null,
+        fluoride: document.querySelector("#editTestFluoride").value ? Number(document.querySelector("#editTestFluoride").value) : null,
+        bacteria: document.querySelector("#editTestBacteria").value ? Number(document.querySelector("#editTestBacteria").value) : null,
+        testDate: document.querySelector("#editTestDate").value,
+      };
+
+      if (!waterTest.waterPumpId || waterTest.waterPumpId < 1) {
+        showMessageEditWaterTest("Water Pump ID must be a whole number greater than 0.", "error");
+        return;
+      }
+
+      if (!waterTest.equipmentId || waterTest.equipmentId < 1) {
+        showMessageEditWaterTest("Equipment ID must be a whole number greater than 0.", "error");
+        return;
+      }
+
+      if (!waterTest.testDate) {
+        showMessageEditWaterTest("Test Date is required.", "error");
+        return;
+      }
+
+      const sql = `
+        UPDATE tblwatertest SET
+          waterPumpId = '${waterTest.waterPumpId}',
+          equipmentId = '${waterTest.equipmentId}',
+          waterpH = ${waterTest.waterpH !== null ? "'" + waterTest.waterpH + "'" : 'NULL'},
+          arsenic = ${waterTest.arsenic !== null ? "'" + waterTest.arsenic + "'" : 'NULL'},
+          fluoride = ${waterTest.fluoride !== null ? "'" + waterTest.fluoride + "'" : 'NULL'},
+          bacteria = ${waterTest.bacteria !== null ? "'" + waterTest.bacteria + "'" : 'NULL'},
+          testDate = '${waterTest.testDate}'
+        WHERE watertestId = '${waterTest.watertestId}'
+      `;
+
+      runQuery(sql, function(result) {
+        if (result && result.success) {
+          showMessageEditWaterTest("Water test updated successfully.", "success");
+          setTimeout(() => {
+            showPage('watertests');
+          }, 1500);
+          return;
+        }
+        if (result && result.error) {
+          showMessageEditWaterTest(result.error, "error");
+        } else {
+          showMessageEditWaterTest("Unable to update the record.", "error");
+        }
+      });
+    });
+    </script>
+
+      <!-- MAINTENANCE -->
+      <div id="page-maintenance" class="page">
+        <h1>Maintenance</h1>
+        <p class="subtitle">Maintenance records for water pumps.<input type="button" value="Add Record" onclick="showPage('add-maintenance');"></p>
+
+        <table id="maintenance-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Pump ID</th>
+              <th>Date</th>
+              <th>Description</th>
+              <th>Status</th>
+              <th>Pump Condition</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="maintenance-tbody">
+            <tr><td colspan="6" class="loading">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- ADD Maintenance -->
+      <div id="page-add-maintenance" class="page">
+        <h1>Add Maintenance Record</h1>
+        <p class="subtitle">Maintenance records for water pumps. <input type="button" value="Add Record" onclick="showPage('add-maintenance');"></p>
+        <form id="maintenanceForm">
+        <div class="form-row">
+          <label for="pumpId">WaterPumpID</label>
+          <input type="number" id="pumpId">
+        </div>
+
+        <div class="form-row">
+          <label for="date">Date</label>
+          <input type="date" id="date" style="width: 200px;">
+        </div>
+
+        <div class="form-row">
+          <label for="description">Description</label>
+          <input type="text" id="description">
+        </div>
+
+        <div class="form-row">
+          <label for="status">Status</label>
+          <select name="status" id="status" style="height: 35px; width: 200px; font-size: medium;",>
+            <option value="1" style="font-size: medium;">Completed</option>
+            <option value="2" style="font-size: medium;">Ongoing</option>
+            <option value="3" style="font-size: medium;">Uncompleted</option>
+          </select>
+        </div>
+
+        <div class="form-row">
+          <label for="condition">Pump Condition</label>
+          <select name="pumpCondition" id="pumpCondition" style="height: 35px; width: 200px;font-size: medium;", >
+            <option value="1" style="font-size: medium;">Working</option>
+            <option value="2" style="font-size: medium;">Under Construction</option>
+            <option value="3" style="font-size: medium;">Maintenance Required</option>
+          </select>
+          <!-- <input type="text" id="condition"> -->
+        </div>
+
+        <button type="submit">Submit</button>
+      </form>
+
+      <!-- This empty box is filled with success or error messages by JavaScript. -->
+      <div id="addmainoutput" class="message"></div>
+
+      </div>
+    <script>
+   const showMessageAddMaintenance = (text, type) => {
+      const output = document.querySelector("#addmainoutput");
+      output.textContent = text;
+      output.className = `message ${type}`;
+    };
+    // Listen for the form being submitted instead of letting the browser reload the page.
+    document.querySelector("#maintenanceForm").addEventListener("submit", async (event) => {
+      event.preventDefault();
+
+      var condition = document.getElementById("pumpCondition");
+      var selectedText = condition.options[condition.selectedIndex].text;
+
+      var status = document.getElementById("status");
+      var statusSelectedText = status.options[status.selectedIndex].text;
+
+      // Read the values from the form and build a JavaScript object to work with.
+      const maintenance = {
+        waterPumpId: Number(document.querySelector("#pumpId").value),
+        date: document.querySelector("#date").value,
+        description: document.querySelector("#description").value.trim(),
+        status: statusSelectedText,
+        condition: selectedText,
+      };
+      console.log(maintenance);
+
+      // Stop here if any of the values break our validation rules.
+      const validationMessageMain = validateMaintenance(maintenance);
+      if (validationMessageMain) {
+        showMessageAddMaintenance(validationMessageMain, "error");
+        return;
+      }
+
+      // Build the SQL INSERT statement using the form values.
+      const sql = `
+          INSERT INTO tblmaintenance (waterPumpId, maintenanceDate, workDescription, maintenanceStatus, pumpCondition)
+          VALUES (
+            '${maintenance.waterPumpId}',
+            '${maintenance.date}',
+            '${escapeSql(maintenance.description)}',
+            '${escapeSql(maintenance.status)}',
+            '${escapeSql(maintenance.condition)}'
+          )
+        `;
+
+      // Send the SQL statement to dbConnector.php and wait for the reply.
+      runQuery(sql, function(result) {
+
+    if (result && result.success) {
+      showMessageAddMaintenance("Maintenance added successfully.", "success");
+
+      document.querySelector("#maintenanceForm").reset();
+
+      return;
+    }
+
+    if (result && result.error) {
+      showMessageAddMaintenance(result.error, "error");
+    } else {
+      showMessageAddMaintenance("Unable to add the record.", "error");
+    }
+
+  });
+   });
+  </script>
+
+  <!-- EDIT MAINTENANCE -->
+      <div id="page-edit-maintenance" class="page">
+        <h1>Edit Maintenance</h1>
+        <p class="subtitle">Maintenance records for water pumps. <input type="button" value="Add Maintenenace Record" onclick="showPage('add-maintenance');"></p>
+        <div id="tableOutput"></div>
+        <form id="editMaintenanceForm">
+        <input type="hidden" id="editMaintenanceID">
+        <div class="form-row">
+          <label for="waterPumpId">Water Pump ID</label>
+          <input type="number" id="editWaterPumpId">
+        </div>
+
+        <div class="form-row">
+          <label for="date">Date</label>
+          <input type="date" id="editDate" style="width: 200px;">
+        </div>
+
+        <div class="form-row">
+          <label for="description">Description</label>
+          <input type="text" id="editDescription">
+        </div>
+
+        <div class="form-row">
+          <label for="status">Status</label>
+          <select name="status" id="editStatus" style="height: 35px; width: 200px; font-size: medium;",>
+            <option value="1" style="font-size: medium;">Completed</option>
+            <option value="2" style="font-size: medium;">Ongoing</option>
+            <option value="3" style="font-size: medium;">Uncompleted</option>
+          </select>
+        </div>
+
+        <div class="form-row">
+          <label for="condition">Pump Condition</label>
+          <select name="pumpCondition" id="editCondition" style="height: 35px; width: 200px;font-size: medium;", >
+            <option value="1" style="font-size: medium;">Working</option>
+            <option value="2" style="font-size: medium;">Under Construction</option>
+            <option value="3" style="font-size: medium;">Maintenance Required</option>
+          </select>
+        </div>
+
+        <button type="submit">Submit</button>
+      </form>
+
+      <!-- This empty box is filled with success or error messages by JavaScript. -->
+      <div id="editMaintenanceOutput" class="message"></div>
+
+    </div>
+    <script>
+      const showEditMaintenanceMessage = (text, type) => {
+        const output = document.querySelector("#editMaintenanceOutput");
+        output.textContent = text;
+        output.className = `message ${type}`;
+      };
+
+      let selectedMaintenanceID = null;
+
+      document.querySelector("#editMaintenanceForm").addEventListener("submit", async (event) => {
+        event.preventDefault();
+
+        if (selectedMaintenanceID === null) {
+          showEditMaintenanceMessage("Choose a Maintenance record from the table before updating.", "error");
+          return;
+        }
+
+        var editCondition = document.getElementById("editCondition");
+        var editSelectedText = editCondition.options[editCondition.selectedIndex].text;
+
+        var editStatus = document.getElementById("editStatus");
+        var editStatusSelectedText = editStatus.options[editStatus.selectedIndex].text;
+
+        const maintenance = {
+          maintenanceId: Number(document.querySelector("#editMaintenanceID").value),
+          waterPumpId: Number(document.querySelector("#editWaterPumpId").value),
+          date: document.querySelector("#editDate").value,
+          description: document.querySelector("#editDescription").value.trim(),
+          status: editStatusSelectedText,
+          pumpCondition: editSelectedText
+        };
+
+        // const validationMessage = validateMaintenance(maintenance);
+        // console.log(validationMessage)
+        // if (validationMessage) {
+        //   showEditMaintenanceMessage(validationMessage, "error");
+        //   return;
+        // }
+
+        // Update the original row by matching the maintenance ID that was selected earlier.
+        const sql = `
+          UPDATE tblmaintenance
+          SET
+            maintenanceId = ${maintenance.maintenanceId},
+            waterPumpId = ${maintenance.waterPumpId},
+            maintenanceDate = '${maintenance.date}',
+            workDescription = '${escapeSql(maintenance.description)}',
+            maintenanceStatus = '${escapeSql(maintenance.status)}',
+            pumpCondition =  '${escapeSql(maintenance.pumpCondition)}'
+          WHERE maintenanceId = ${selectedMaintenanceID}
+        `;
+
+        // Send the SQL UPDATE statement to the PHP connector.
+        runQuery(sql, function(result) {
+          if (result && result.success) {
+            showEditMaintenanceMessage("Maintenance Record updated successfully.", "success");
+            return;
+          }
+
+          if (result && result.error) {
+            showEditMaintenanceMessage(result.error, "error");
+          } else {
+            showEditMaintenanceMessage("Update failed.", "error");
+          }
+          console.log(result.error);
+
+        });
+      });
+  </script>
+
+      <!-- EMPLOYEES -->
+      <div id="page-employees" class="page">
+        <h1>Employees</h1>
+        <p class="subtitle">Staff records and department assignments. <input type="button" value="Add New Employee" onclick="showPage('add-employee');"></p>
+
+        <table id="employees-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Name</th>
+              <th>DOB</th>
+              <th>Address</th>
+              <th>Email</th>
+              <th>Phone</th>
+              <th>Department ID</th>
+              <th>Location ID</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="employees-tbody">
+            <tr><td colspan="9" class="loading">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+       <!-- ADD EMPLOYEE -->
+      <div id="page-add-employee" class="page">
+        <h1>Add New Employee</h1>
+
+        <!-- button to naviagate back to the employees page -->
+        <p class="subtitle">Staff records and department assignments. </p><input type="button" value="Back to Employees"
+          onclick="showPage('employees');">
+
+        <form id="addEmployeeForm">
+          <input type="hidden" id="addEmployeeId">
+
+          <!-- Form fields for employee details -->
+          <div class="form-row">
+            <label for="forename">Forename</label>
+            <input type="text" id="addForename">
+          </div>
+
+          <div class="form-row">
+            <label for="surname">Surname</label>
+            <input type="text" id="addSurname">
+          </div>
+
+          <div class="form-row">
+            <label for="DOB">Date of Birth</label>
+            <input type="date" id="addDOB">
+          </div>
+
+          <div class="form-row">
+            <label for="address">Address</label>
+            <input type="text" id="addAddress">
+          </div>
+
+          <div class="form-row">
+            <label for="email">Email</label>
+            <input type="email" id="addEmail">
+          </div>
+
+          <div class="form-row">
+            <label for="phone">Phone</label>
+            <input type="tel" id="addPhone">
+          </div>
+
+          <div class="form-row">
+            <label for="departmentId">Department ID</label>
+            <input type="number" id="addDepartmentId" min="1">
+          </div>
+
+          <div class="form-row">
+            <label for="locationId">Location ID</label>
+            <input type="number" id="addLocationId" min="1">
+          </div>
+
+          <button type="submit">Submit</button>
+        </form>
+
+        <!--  filled with success or error messages  -->
+        <div id="employee-output" class="message"></div>
+
+
+        <script>
+          const showEmployeeMessage = (text, type) => {
+            const output = document.querySelector("#employee-output");
+            output.textContent = text;
+            output.className = `message ${type}`;
+          };
+
+          document.addEventListener("DOMContentLoaded", () => {
+
+            document.querySelector("#addEmployeeForm").addEventListener("submit", function (event) {
+              event.preventDefault();
+
+              const employee = {
+                forename: document.querySelector("#addForename").value.trim(),
+                surname: document.querySelector("#addSurname").value.trim(),
+                dob: document.querySelector("#addDOB").value,
+                address: document.querySelector("#addAddress").value.trim(),
+                email: document.querySelector("#addEmail").value.trim(),
+                phone: document.querySelector("#addPhone").value.trim(),
+                departmentId: document.querySelector("#addDepartmentId").value,
+                locationId: document.querySelector("#addLocationId").value,
+              };
+
+              // Validate the input values before uploading to the database
+              const validationMessage = validateEmployee(employee);
+              if (validationMessage) {
+                showEmployeeMessage(validationMessage, "error");
+                return;
+              }
+
+              console.log("Submitting employee:", employee);
+
+              // check if departmentid exists
+              runQuery(
+                `SELECT departmentId FROM tbldepartment WHERE departmentId = ${employee.departmentId}`,
+                function (deptRes) {
+
+                  if (!deptRes.data || deptRes.data.length === 0) {
+                    showEmployeeMessage("Department does not exist", "error");
+                    return;
+                  }
+
+                  // check if locationid exists
+                  runQuery(
+                    `SELECT locationId FROM tbllocation WHERE locationId = ${employee.locationId}`,
+                    function (locRes) {
+
+                      if (!locRes.data || locRes.data.length === 0) {
+                        showEmployeeMessage("Location does not exist", "error");
+                        return;
+                      }
+
+                      // instert to the db
+                      const sql = `
+                          INSERT INTO tblemployees 
+                          (forename, surname, dob, address, email, phone, departmentId, locationId)
+                          VALUES (
+                            '${escapeSql(employee.forename)}',
+                            '${escapeSql(employee.surname)}',
+                            '${escapeSql(employee.dob)}',
+                            '${escapeSql(employee.address)}',
+                            '${escapeSql(employee.email)}',
+                            '${escapeSql(employee.phone)}',
+                            ${parseInt(employee.departmentId)},
+                            ${parseInt(employee.locationId)}
+                          )
+                        `;
+
+                      runQuery(sql, function (result) {
+                        console.log(result);
+                        if (result && result.success) {
+                          showEmployeeMessage("Employee added successfully", "success");
+                          document.querySelector("#addEmployeeForm").reset();
+                          return;
+                        }
+
+                        if (result && result.error) {
+                          showEmployeeMessage(result.error, "error");
+                        } else {
+                          showEmployeeMessage("Insert failed", "error");
+                        }
+                      }
+                      );
+                    }
+                  );
+                });
+
+            });
+
+          });
+
+        </script>
+      </div>
+
+      <!-- EDIT EMPLOYEE DETAILS -->
+      <div id="page-edit-employee" class="page">
+
+        <h1>Edit Employee Details</h1>
+
+        <!-- button to naviagate back to the employees page -->
+        <p class="subtitle">Staff records and department assignments. </p><input type="button" value="Back to Employees"
+          onclick="showPage('employees');">
+
+        <form id="editEmployeeForm">
+          <input type="hidden" id="editEmployeeId">
+
+          <!-- Form fields for employee details -->
+          <div class="form-row">
+            <label for="forename">Forename</label>
+            <input type="text" id="editForename">
+          </div>
+
+          <div class="form-row">
+            <label for="surname">Surname</label>
+            <input type="text" id="editSurname">
+          </div>
+
+          <div class="form-row">
+            <label for="DOB">Date of Birth</label>
+            <input type="date" id="editDOB">
+          </div>
+
+          <div class="form-row">
+            <label for="address">Address</label>
+            <input type="text" id="editAddress">
+          </div>
+
+          <div class="form-row">
+            <label for="email">Email</label>
+            <input type="email" id="editEmail">
+          </div>
+
+          <div class="form-row">
+            <label for="phone">Phone</label>
+            <input type="tel" id="editPhone">
+          </div>
+
+          <div class="form-row">
+            <label for="departmentId">Department ID</label>
+            <input type="number" id="editEmployeeDepartmentId" min="1">
+          </div>
+
+          <div class="form-row">
+            <label for="locationId">Location ID</label>
+            <input type="number" id="editEmployeeLocationId" min="1">
+          </div>
+
+          <button type="submit">Submit</button>
+        </form>
+
+        <!-- This empty box is filled with success or error messages by JavaScript. -->
+        <div id="editEmployeeOutput" class="editMessage"></div>
+
+        <script>
+          const showEmployeeEditMessage = (text, type) => {
+            const output = document.querySelector("#editEmployeeOutput");
+            output.textContent = text;
+            output.className = `message ${type}`;
+          };
+
+          document.querySelector('#editEmployeeForm').addEventListener('submit', async (event) => {
+            event.preventDefault();
+
+            alert("Submitting edit form - Good!");
+
+            if (selectedEmployeeId === null) {
+              showEmployeeEditMessage("Choose an employee from the table before updating.", "error");
+              return;
+            }
+
+            const employee = {
+              employeeId: Number(document.querySelector("#editEmployeeId").value),
+              forename: document.querySelector("#editForename").value.trim(),
+              surname: document.querySelector("#editSurname").value.trim(),
+              dob: document.querySelector("#editDOB").value,
+              address: document.querySelector("#editAddress").value.trim(),
+              email: document.querySelector("#editEmail").value.trim(),
+              phone: document.querySelector("#editPhone").value.trim(),
+              departmentId: document.querySelector("#editEmployeeDepartmentId").value,
+              locationId: document.querySelector("#editEmployeeLocationId").value
+            };
+
+            const validationMessage = validateEmployee(employee);
+            console.log(validationMessage)
+            if (validationMessage) {
+              showEmployeeEditMessage(validationMessage, "error");
+              return;
+            }
+
+            const sql = `
+          UPDATE tblemployees
+          SET
+            forename = '${escapeSql(employee.forename)}',
+            surname = '${escapeSql(employee.surname)}',
+            dob = '${escapeSql(employee.dob)}',
+            address = '${escapeSql(employee.address)}',
+            email = '${escapeSql(employee.email)}',
+            phone = '${escapeSql(employee.phone)}',
+            departmentId = ${parseInt(employee.departmentId)},
+            locationId = ${parseInt(employee.locationId)}
+          WHERE employeeId = ${selectedEmployeeId
+              }
+        `;
+
+            runQuery(sql, function (result) {
+              if (result && result.success) {
+                showEmployeeEditMessage("Employee updated successfully.", "success");
+                return;
+              }
+              if (result && result.error) {
+                showEmployeeEditMessage(result.error, "error");
+              } else {
+                showEmployeeEditMessage("Update failed.", "error");
+              }
+              console.log(result.error);
+            });
+          });
+        </script>
+      </div>
+
+      <!-- DEPARTMENTS -->
+      <div id="page-departments" class="page">
+        <h1>Departments</h1>
+        <p class="subtitle">Organisation department records. <input type="button" value="Add Department" onclick="showPage('add-department');"></p>
+
+        <table id="departments-table">
+          <thead>
+            <tr>
+              <th>Department ID</th>
+              <th>Department Name</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="departments-tbody">
+            <tr><td colspan="3" class="loading">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+            <!-- ADD DEPARTMENT -->
+      <div id="page-add-department" class="page">
+        <h1>Add Department</h1>
+        <p class="subtitle">Create a neworganisation department record. <input type="button" value="Add Department" onclick="showPage('add-department');"></p>
+        <form id="departmentForm">
+        <div class="form-row">
+          <label for="departmentName">Department Name</label>
+          <input type="text" id="addDepartmentName">
+        </div>
+
+        <button type="submit">Submit</button>
+      </form>
+
+      <!-- This empty box is filled with success or error messages by JavaScript. -->
+      <div id="dept-output" class="message"></div>
+
+    </div>
+        <script>
+      // Show feedback to the user after validation or a database action.
+      const showDeptMessage = (text, type) => {
+        const deptOutput = document.querySelector("#dept-output");
+        deptOutput.textContent = text;
+        deptOutput.className = `message ${type}`;
+        };
+
+      // Listen for the form being submitted instead of letting the browser reload the page.
+      document.querySelector("#departmentForm").addEventListener("submit", async (event) => {
+        event.preventDefault();
+
+        // Read the values from the form and build a JavaScript object to work with.
+        const department = {
+          name: document.querySelector("#addDepartmentName").value.trim(),
+        };
+
+        // Stop here if any of the values break our validation rules.
+        const validationMessage = validateDepartment(department);
+        if (validationMessage) {
+          showDeptMessage(validationMessage, "error");
+          return;
+        }
+
+        // Build the SQL INSERT statement using the form values.
+        const sql = `
+            INSERT INTO tbldepartment (departmentName)
+            VALUES (
+              '${escapeSql(department.name)}'
+            )
+          `;
+
+        // Send the SQL statement to dbConnector.php and wait for the reply.
+        runQuery(sql, function(result) {
+
+      if (result && result.success) {
+        showDeptMessage("Department added successfully.", "success");
+
+        document.querySelector("#departmentForm").reset();
+
+        return;
+      }
+
+      if (result && result.error) {
+        showDeptMessage(result.error, "error");
+      } else {
+        showDeptMessage("Unable to add the record.", "error");
+      }
+
+    });
+   });
+
+  </script>
+
+  <!-- EDIT DEPARTMENT -->
+      <div id="page-edit-department" class="page">
+        <h1>Edit Department</h1>
+        <p class="subtitle">Edit existing department records. <input type="button" value="Add Department" onclick="showPage('add-department');"></p>
+        <div id="tableOutput"></div>
+        <form id="editDepartmentForm">
+        <input type="hidden" id="editDepartmentID">
+        <div class="form-row">
+          <label for="departmentName">Department Name</label>
+          <input type="text" id="editDepartmentName">
+        </div>
+
+        <button type="submit">Submit</button>
+      </form>
+
+      <!-- This empty box is filled with success or error messages by JavaScript. -->
+      <div id="editDeptOutput" class="editMessage"></div>
+
+    </div>
+    <script>
+      const showDeptEditMessage = (text, type) => {
+        const output = document.querySelector("#editDeptOutput");
+        output.textContent = text;
+        output.className = `message ${type}`;
+      };
+
+      document.querySelector("#editDepartmentForm").addEventListener("submit", async (event) => {
+        event.preventDefault();
+
+        if (selectedDepartmentID === null) {
+          showDeptEditMessage("Choose a department from the table before updating.", "error");
+          return;
+        }
+
+        const department = {
+          departmentID: Number(document.querySelector("#editDepartmentID").value),
+          name: document.querySelector("#editDepartmentName").value.trim()
+        };
+
+        const validationMessage = validateDepartment(department);
+        console.log(validationMessage)
+        if (validationMessage) {
+          showDeptEditMessage(validationMessage, "error");
+          return;
+        }
+
+        // Update the original row by matching the student ID that was selected earlier.
+        const sql = `
+          UPDATE tbldepartment
+          SET
+            departmentName = '${escapeSql(department.name)}'
+          WHERE departmentID = ${selectedDepartmentID}
+        `;
+
+        // Send the SQL UPDATE statement to the PHP connector.
+        runQuery(sql, function(result) {
+          if (result && result.success) {
+            showDeptEditMessage("Department updated successfully.", "success");
+            return;
+          }
+
+          if (result && result.error) {
+            showDeptEditMessage(result.error, "error");
+          } else {
+            showDeptEditMessage("Update failed.", "error");
+          }
+          console.log(result.error);
+
+        });
+      });
+  </script>
+
+      <!-- EMPLOYEE PUMP ASSIGNMENT -->
+      <div id="page-employee-pump-assignment" class="page">
+        <h1>Employee Pump Assignment</h1>
+        <p class="subtitle">Details employees who are assigned to pump ordered by number of employees assigned.
+
+        <table id="employee-pump-assignment-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Pump Type<br>
+                <select id="filter-pumpType" onchange="filterPumpAssignmentTable()">
+                  <option value="">All</option>
+                </select>
+              </th>
+              <th>Country<br>
+                <select id="filter-country" onchange="filterPumpAssignmentTable()">
+                  <option value="">All</option>
+                </select>
+              </th>
+              <th>City<br>
+                <select id="filter-city" onchange="filterPumpAssignmentTable()">
+                  <option value="">All</option>
+                </select>
+              </th>
+              <th>Employee Count</th>
+              <th>Employees</th>
+            </tr>
+          </thead>
+          <tbody id="employee-pump-assignment-tbody">
+            <tr><td colspan="7" class="loading">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Maintenance Report -->
+      <div id="page-report-maintenance" class="page">
+  <h1>Regional Maintenance Prioritization</h1>
+  <p class="subtitle">Justification: Identifies geographic clusters of hardware in 'Low' condition to prioritize maintenance dispatch.</p>
+  <div class="filter-bar">
+    <label for="filter-maintenance-country">Filter by Country:</label>
+    <select id="filter-maintenance-country" onchange="filterMaintenanceReport()">
+      <option value="">All Countries</option>
+    </select>
+  </div>
+  <table>
+    <thead>
+      <tr>
+        <th>Country</th>
+        <th>City</th>
+        <th>Low Condition Count</th>
+        <th>Last Maintenance</th>
+      </tr>
+    </thead>
+    <tbody id="report-maintenance-tbody">
+      <tr><td colspan="4" class="loading">Loading...</td></tr>
+    </tbody>
+  </table>
+</div>
+<div id="page-most-water-tests-pumps" class="page">
+  <h1>Most Water Tests</h1>
+  <p class="subtitle">Justification: Monitors water pump tests identify those below accetable limits.</p>
+  <!-- waterPumpId, pumpType, country, city, Test Count, First Test, Latest Test -->
+  <div class="filter-bar">
+  </div>
+  <table>
+    <thead>
+      <tr>
+        <th>Pump Type<br>
+          <select id="filter-most-water-tests-pump-type" onchange="filterMostWaterTestsReport()">
+            <option value="">All Pump Types</option>
+          </select>
+        </th>
+        <th>Country<br>
+          <select id="filter-most-water-tests-country" onchange="filterMostWaterTestsReport()">
+            <option value="">All Countries</option>
+          </select>
+        </th>
+        <th>City<br>
+          <select id="filter-most-water-tests-city" onchange="filterMostWaterTestsReport()">
+            <option value="">All Cities</option>
+          </select>
+        </th>
+        <th>Test Count</th>
+        <th>First Test</th>
+        <th>Latest Test</th>
+      </tr>
+    </thead>
+    <tbody id="report-most-water-tests-tbody">
+      <tr><td colspan="3" class="loading">Loading...</td></tr>
+    </tbody>
+  </table>
+  <div class="chart-wrapper" style="height:500px; margin-top:20px;">
+    <canvas id="pumpTestsChart"></canvas>
+  </div>
+</div>
+
+<!-- Workload Report -->
+<div id="page-report-workload" class="page">
+  <h1>Staff Workload Distribution</h1>
+  <p class="subtitle">Justification: Monitors employee capacity by identifying those assigned to more than 3 pumps to prevent burnout.</p>
+  <div class="filter-bar">
+    <label for="filter-workload-department">Filter by Department:</label>
+    <select id="filter-workload-department" onchange="filterWorkloadReport()">
+      <option value="">All Departments</option>
+    </select>
+  </div>
+  <table>
+    <thead>
+      <tr>
+        <th>Employee Name</th>
+        <th>Department</th>
+        <th>Total Pumps Assigned</th>
+      </tr>
+    </thead>
+    <tbody id="report-workload-tbody">
+      <tr><td colspan="3" class="loading">Loading...</td></tr>
+    </tbody>
+  </table>
+  <div class="chart-wrapper" style="height:500px; margin-top:20px;">
+    <canvas id="workloadChart"></canvas>
+  </div>
+</div>
+
+<!-- Basin Contamination Report -->
+<div id="page-report-contamination" class="page">
+  <h1>High-Risk Basin Contamination</h1>
+  <p class="subtitle">Justification: Highlights water basins with high average Arsenic/Fluoride levels for long-term health monitoring.</p>
+  <div class="filter-bar">
+    <label for="filter-contamination-basin">Filter by Basin:</label>
+    <select id="filter-contamination-basin" onchange="filterContaminationReport()">
+      <option value="">All Basins (Top 10)</option>
+    </select>
+  </div>
+  <table>
+    <thead>
+      <tr>
+        <th>Basin Name</th>
+        <th>Avg Arsenic</th>
+        <th>Avg Fluoride</th>
+        <th>Total Tests</th>
+      </tr>
+    </thead>
+    <tbody id="report-contamination-tbody">
+      <tr><td colspan="4" class="loading">Loading...</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- EMPLOYEE MAINTENANCE ASSIGNMENT -->
+      <div id="page-employee-main-assignment" class="page">
+        <h1>Employee Maintenance Assignment</h1>
+        <p class="subtitle">Details employees who carried out maintenance, ordered by number of employees.
+
+        <table id="employee-main-assignment-table">
+          <thead>
+            <tr>
+              <th>Maintenance ID</th>
+              <th>Water Pump ID</th>
+              <th>Country<br>
+                <select id="filter-main-country" onchange="filterMainAssignmentTable()">
+                  <option value="">All</option>
+                </select>
+              </th>
+              <th>City<br>
+                <select id="filter-main-city" onchange="filterMainAssignmentTable()">
+                  <option value="">All</option>
+                </select>
+              </th>
+              <th>Maintenance Description</th>
+              <th>Employee Count</th>
+              <th>Employees</th>
+            </tr>
+          </thead>
+          <tbody id="employee-main-assignment-tbody">
+            <tr><td colspan="7" class="loading">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- UNCOMPLETED MAINTENANCE -->
+      <div id="page-report-uncompleted-maintenance" class="page">
+        <h1>Uncompleted Maintenance</h1>
+        <p class="subtitle">Maintenance on pumps that are labeled uncompleted or ongoing for more than 1 month
+
+        <table id="uncompleted-maintenance-table">
+          <thead>
+            <tr>
+              <th>Country<br>
+                <select id="filter-unc-main-country" onchange="filterUncompletedMainTable()">
+                  <option value="">All</option>
+                </select>
+              </th>
+              <th>City<br>
+                <select id="filter-unc-main-city" onchange="filterUncompletedMainTable()">
+                  <option value="">All</option>
+                </select>
+              </th>
+              <th>Number of Uncompleted/Ongoing Maintenance</th>
+            </tr>
+          </thead>
+          <tbody id="report-uncompleted-maintenance-tbody">
+            <tr><td colspan="7" class="loading">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- INSTALLED WATER PUMPS -->
+      <div id="page-report-installed-waterpumps" class="page">
+        <h1>Installed Water Pumps</h1>
+        <p class="subtitle">Type of Water Pumps installed in the last year per city
+
+        <table id="installed-waterpumps-table">
+          <thead>
+            <tr>
+              <th>Country<br>
+                <select id="filter-installed-country" onchange="filterInstalledPumpsTable()">
+                  <option value="">All</option>
+                </select>
+              </th>
+              <th>City<br>
+                <select id="filter-installed-city" onchange="filterInstalledPumpsTable()">
+                  <option value="">All</option>
+                </select>
+              </th>
+              <th>Pump Type<br>
+                <select id="filter-installed-pump-type" onchange="filterInstalledPumpsTable()">
+                  <option value="">All Pump Types</option>
+                </select>
+              </th>
+              <th>Number of Water Pumps Installed</th>
+            </tr>
+          </thead>
+          <tbody id="report-installed-waterpumps-tbody">
+            <tr><td colspan="7" class="loading">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+       <!-- PUMPS WITH NO MAINTENANCE HISTORY -->
+      <div id="page-report-maintenance-history" class="page">
+        <h1>Pumps with No Maintenance History</h1>
+        <p class="subtitle">Justification: Monitors pumps which have never undergone maintenance, indicating potential
+          neglect and risk of failure.</p>
+        <div class="filter-bar">
+          <label for="filter-maintenance-history-country">Filter by Country:</label>
+          <select id="filter-maintenance-history-country" onchange="filterMaintenanceHistoryReport()">
+            <option value="">All Countries</option>
+          </select>
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Water Pump ID</th>
+              <th>Country</th>
+              <th>City</th>
+              <th>Pump Type</th>
+              <th>Installation Date</th>
+            </tr>
+          </thead>
+          <tbody id="report-maintenance-history-tbody">
+            <tr>
+              <td colspan="5" class="loading">Loading...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+            <!-- MAINTENANCE vs WATER QUALITY -->
+      <div id="page-maintenance-reliability" class="page">
+        <h1>Maintenance vs Water Quality</h1>
+        <p class="subtitle">Comparison of water quality between recently maintained and non-maintained pumps.</p>
+
+        <table id="maintenance-reliability-table">
+          <thead>
+            <tr>
+              <th>Country</th>
+              <th>Maintenance Status</th>
+              <th>Avg Bacteria</th>
+              <th>Avg Arsenic</th>
+              <th>Avg Fluoride</th>
+              <th>Pump Count</th>
+            </tr>
+          </thead>
+          <tbody id="maintenance-reliability-tbody">
+            <tr><td colspan="6" class="loading">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- HIGH MAINTENANCE PUMPS -->
+      <div id="page-high-maintenance-pumps" class="page">
+        <h1>High Maintenance Pumps</h1>
+        <p class="subtitle">Pumps that require above average levels of maintenance.</p>
+        <table id="high-maintenance-table">
+          <thead>
+            <tr>
+              <th>Pump ID</th>
+              <th>Country</th>
+              <th>City</th>
+              <th>Avg Days Between Maintenance</th>
+              <th>Maintenance Events</th>
+            </tr>
+          </thead>
+          <tbody id="high-maintenance-tbody">
+            <tr><td colspan="5" class="loading">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- REPORTS -->
+      <div id="page-reports" class="page">
+        <h1>Reports</h1>
+        <p class="subtitle">SQL-driven reports for organisational and SDG monitoring needs.</p>
+      </div>
+
+    </div>
+  </div>
+
+</body>
+</html>

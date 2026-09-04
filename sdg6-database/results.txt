@@ -1,0 +1,76 @@
+pumpType	count	percentage
+Hand Pump	146	58.4
+Mechanized Pump	72	28.8
+Solar Pump	32	12.8
+waterPumpId	pumpType	country	city	Assigned Employee Count	Assigned Employees
+242	Hand Pump	Ghana	Tamale	6	Rutendo Nyirenda, Obinna Mensah, Zola Banda, Blessing Mhango, Panashe Tembo, Kojo Mensah
+8	Hand Pump	Tanzania	Dodoma	5	Chidi Suleiman, Akinyi Kimani, Obinna Balogun, Rudo Ndlovu, Takudzwa Kamanga
+83	Hand Pump	Nigeria	Gombe	5	Ngozi Abubakar, Ngozi Okafor, Ngozi Suleiman, Panashe Gondwe, Tatenda Banda
+149	Mechanized Pump	Ethiopia	Bahir Dar	5	Farai Nyirenda, Tendai Gondwe, Adaeze Agyeman, Panashe Tembo, Tatenda Banda
+211	Mechanized Pump	Nigeria	Katsina	5	Juma Nyong'o, Ama Traore, Otieno Kamau, Akinyi Nyong'o, Amani Ochieng
+30	Hand Pump	Nigeria	Bauchi	4	Baraka Wekesa, Blessing Mhango, Nyasha Gondwe, Rutendo Nyirenda
+58	Mechanized Pump	Ethiopia	Bahir Dar	4	Thandiwe Gondwe, Akosua Okafor, Munashe Kamanga, Chidi Owusu
+64	Hand Pump	Ethiopia	Semera	4	Tinashe Mbewe, Obinna Nkrumah, Zola Banda, Juma Otieno
+74	Hand Pump	Tanzania	Shinyanga	4	Thandiwe Gondwe, Akinyi Ouma, Wafula Otieno, Sipho Moyo
+77	Mechanized Pump	Ethiopia	Hawassa	4	Juma Nyong'o, Thandiwe Dlamini, Farida Ochieng, Mutua Wanjiku
+92	Mechanized Pump	Ghana	Tamale	4	Nekesa Ochieng, Adaeze Mensah, Kibet Otieno, Ngozi Abubakar
+107	Hand Pump	Ghana	Tamale	4	Oluwaseun Abubakar, Adaeze Okafor, Panashe Tembo, Kwame Agyeman
+137	Mechanized Pump	Kenya	Isiolo	4	Obinna Mensah, Adaeze Okafor, Blessing Mhango, Akinyi Kamau
+138	Hand Pump	Tanzania	Tabora	4	Rutendo Nyirenda, Auma Wekesa, Folake Mensah, Adaeze Mensah
+154	Mechanized Pump	Ethiopia	Dire Dawa	4	Baraka Wekesa, Chidinma Abubakar, Wafula Ouma, Sipho Moyo
+176	Hand Pump	Ethiopia	Hawassa	4	Folake Okonkwo, Chidi Diallo, Chidi Owusu, Kudzai Dlamini
+214	Hand Pump	Tanzania	Shinyanga	4	Folake Okonkwo, Obinna Nkrumah, Obinna Balogun, Nyasha Gondwe
+233	Mechanized Pump	Tanzania	Dodoma	4	Tinashe Mbewe, Chipo Mhango, Akinyi Kamau, Wafula Ouma
+5	Hand Pump	Kenya	Moyale	3	Chipo Mhango, Otieno Kamau, Chidi Owusu
+7	Mechanized Pump	Tanzania	Singida	3	Oluwaseun Abubakar, Tatenda Moyo, Rudo Ndlovu
+10	Hand Pump	Ghana	Ho	3	Chidi Suleiman, Chidi Okafor, Wanjiku Kamau
+13	Solar Pump	Ghana	Ho	3	Chidi Okafor, Oluwaseun Abubakar, Wafula Otieno
+14	Mechanized Pump	Nigeria	Gusau	3	Chidi Suleiman, Panashe Tembo, Wafula Ouma
+17	Solar Pump	Nigeria	Gusau	3	Obinna Nkrumah, Kwame Agyeman, Rutendo Dlamini
+18	Mechanized Pump	Tanzania	Shinyanga	3	Zola Banda, Blessing Mhango, Kofi Agyeman
+23	Hand Pump	Ghana	Ho	3	Obinna Nkrumah, Omondi Kimani, Chidi Owusu
+24	Hand Pump	Malawi	Salima	3	Kwesi Okafor, Adaeze Mensah, Chidinma Abubakar
+27	Hand Pump	Tanzania	Bariadi	3	Amani Ochieng, Juma Mwangi, Sipho Moyo
+52	Hand Pump	Ghana	Bolgatanga	3	Akinyi Ouma, Panashe Gondwe, Chidinma Okonkwo
+57	Mechanized Pump	Ghana	Tamale	3	Ngozi Okafor, Omondi Kimani, Chidinma Okonkwo
+59	Mechanized Pump	Nigeria	Katsina	3	Kojo Mensah, Kibet Njoroge, Omondi Kimani
+67	Mechanized Pump	Tanzania	Geita	3	Chidi Balogun, Chebet Ouma, Kwame Asante
+76	Solar Pump	Malawi	Lilongwe	3	Chidinma Abubakar, Nyasha Ndlovu, Rutendo Dlamini
+82	Hand Pump	Nigeria	Dutse	3	Ngozi Okafor, Wafula Otieno, Munashe Kamanga
+90	Mechanized Pump	Tanzania	Geita	3	Chidi Suleiman, Chidi Diallo, Chidinma Okonkwo
+95	Mechanized Pump	Tanzania	Bariadi	3	Kwame Agyeman, Juma Mwangi, Ama Traore
+105	Mechanized Pump	Tanzania	Mwanza	3	Chipo Nyirenda, Ngozi Okafor, Kibet Otieno
+106	Hand Pump	Kenya	Kitui	3	Folake Okafor, Chidinma Okonkwo, Otieno Kamau
+110	Mechanized Pump	Tanzania	Shinyanga	3	Juma Nyong'o, Juma Otieno, Blessing Mhango
+112	Mechanized Pump	Malawi	Karonga	3	Farida Ochieng, Kojo Mensah, Obinna Balogun
+117	Mechanized Pump	Ghana	Techiman	3	Rutendo Nyirenda, Tendai Kamau, Kofi Agyeman
+120	Hand Pump	Kenya	Isiolo	3	Chidi Balogun, Akinyi Ouma, Obinna Balogun
+125	Hand Pump	Ethiopia	Bahir Dar	3	Adaeze Okafor, Adebayo Abubakar, Sipho Moyo
+126	Hand Pump	Tanzania	Geita	3	Wafula Cheruiyot, Chipo Mhango, Farida Ochieng
+140	Mechanized Pump	Ghana	Tamale	3	Akinyi Nyong'o, Baraka Kimani, Zola Banda
+152	Mechanized Pump	Nigeria	Gombe	3	Chidi Diallo, Tatenda Phiri, Farida Ochieng
+161	Hand Pump	Nigeria	Bauchi	3	Mwende Kamau, Chipo Mhango, Folake Mensah
+171	Hand Pump	Ethiopia	Asosa	3	Rudo Ndlovu, Ama Okonkwo, Chidi Okafor
+180	Solar Pump	Ghana	Bolgatanga	3	Obinna Mensah, Tendai Kamau, Tapiwa Mbewe
+187	Mechanized Pump	Malawi	Salima	3	Rudo Ndlovu, Rumbidzai Jere, Tatenda Banda
+waterPumpId	pumpType	country	city	Test Count	First Test	Latest Test
+13	Solar Pump	Ghana	Ho	6	2022-01-28	2025-06-01
+44	Mechanized Pump	Ethiopia	Harar	6	2022-06-28	2024-07-02
+206	Solar Pump	Ethiopia	Dire Dawa	6	2023-12-25	2026-02-14
+236	Hand Pump	Kenya	Wote	6	2025-08-02	2026-01-27
+149	Mechanized Pump	Ethiopia	Bahir Dar	6	2024-05-15	2026-01-19
+211	Mechanized Pump	Nigeria	Katsina	5	2021-07-23	2023-07-18
+115	Hand Pump	Ghana	Ho	5	2022-04-12	2025-10-30
+129	Mechanized Pump	Malawi	Karonga	5	2023-12-20	2026-02-08
+210	Hand Pump	Ethiopia	Bahir Dar	5	2023-03-31	2025-04-11
+4	Hand Pump	Tanzania	Tabora	5	2021-09-11	2025-09-16
+3	Mechanized Pump	Tanzania	Mwanza	5	2023-01-09	2025-11-29
+37	Hand Pump	Ghana	Bolgatanga	5	2025-12-12	2026-02-28
+84	Hand Pump	Malawi	Mzuzu	4	2022-11-12	2025-03-07
+133	Solar Pump	Ghana	Tamale	4	2020-01-01	2023-10-12
+213	Solar Pump	Tanzania	Bariadi	4	2023-11-21	2025-10-02
+29	Hand Pump	Malawi	Nkhotakota	4	2023-01-03	2024-11-06
+150	Solar Pump	Ethiopia	Hawassa	4	2020-06-27	2025-05-22
+93	Hand Pump	Ghana	Techiman	4	2022-07-10	2025-06-30
+222	Hand Pump	Nigeria	Gusau	4	2023-01-14	2025-12-07
+183	Solar Pump	Kenya	Moyale	4	2023-08-22	2024-06-09
